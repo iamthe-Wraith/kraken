@@ -2,7 +2,7 @@
 
 Kraken is a little tool to help save you time by finding the hashes for commits you want to release.
 
-When you run the tool, you can pass it any number of strings you want to look for in the git log (usually something like Jira ticket or GitHub issue id's). Kraken will then search your project's git log for those strings and return the hashes of any commits that contain them.
+When you run the tool, you can pass it any number of strings you want to look for in the git log (usually something like Jira ticket or GitHub issue id's). Kraken will then search your project's git log for those strings and return the hashes of any commits that contain them. You can then have Kraken create a  new release branch, cherry-pick those commits into it, and then create a new PR for you! 🐙
 
 ![A cute little kraken splashing in the water and playing with a toy boat](./kraken.png)
 
@@ -34,6 +34,6 @@ alias kraken="/usr/local/bin/kraken.sh"
 
 1. Run `kraken.sh` in your terminal (*if you added an alias as recommended above, you only need to run `kraken`*)
 2. Follow the prompts
-3. Take the commit hashes and *Release the Kraken!*
+3. *Release the Kraken!*
 
 🐙 *If any of your queries are not found, Kraken will let you know and you can try again.*
