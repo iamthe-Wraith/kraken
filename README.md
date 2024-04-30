@@ -2,7 +2,7 @@
 
 Kraken is a simple tool to help you find the hashes for commits you want to release. For now, you can manually run the tool, pass it the strings you want to look for in the git log (probably something like Jira ticket numbers), and it will return the hashes for the commits that contain those strings.
 
-![A cute little kraken splashing in the water and playing with a toy boat](./kraken.webp)
+![A cute little kraken splashing in the water and playing with a toy boat](./kraken.png)
 
 ## Installation
 
