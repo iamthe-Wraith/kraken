@@ -8,7 +8,7 @@ Kraken is a simple tool to help you find the hashes for commits you want to rele
 
 1. Add `kraken.sh` to `/usr/local/bin` (or another directory in your `$PATH`)
 2. Make sure it's executable: `chmod +x /usr/local/bin/kraken.sh`
-3. [Optional by recommended] Add an alias to your shell configuration file (e.g. `~/.bashrc` or `~/.zshrc`): `alias kraken="/usr/local/bin/kraken.sh"`
+3. [**Optional but Recommended**] Add an alias to your shell configuration file (e.g. `~/.bashrc` or `~/.zshrc`): `alias kraken="/usr/local/bin/kraken.sh"`
 
 ## Usage
 
@@ -17,3 +17,4 @@ Kraken is a simple tool to help you find the hashes for commits you want to rele
 2. Follow the prompts
 3. Take the commit hashes and *Release the Kraken!*
 
+If any of your queries are not found, Kraken will let you know and you can try again.
