@@ -1,46 +1,46 @@
 #!/usr/bin/env bash
 
-more_queries=true
-query=""
+declare -a QUERIES=()
 
-while $more_queries
+NL=$'\n'
+
+while :
 do
-    echo ""
-    question=""
+    read -p "${NL}Enter the text to query for: " response
     
-    if [[ "$query" = "" ]] ; then
-        question="Enter ticket id: (example: DEV-1234) "
-    else
-        question="Enter another ticket id: "
-    fi
+    QUERIES+=("$response")
 
-    read -p "$question" response
-    
+    read -p "${NL}Do you have more queries to enter? (Y/n) " moreTickets
 
-    if [[ "$query" = "" ]] ; then
-        query="$response"
-    else
-        query="$query|$response"
-    fi
-
-    echo ""
-    read -p "Do you have more tickets to enter? (Y/n) " moreTickets
-
-    if [ "$moreTickets" = "n" ] || [ "$moreTickets" = "no" ] || [ "$moreTickets" = "No" ] ; then
-        more_queries=false
-    fi
-
-    if ! $more_queries ; then
+    if [ "$moreTickets" = "n" ] || [ "$moreTickets" = "N" ] || [ "$moreTickets" = "no" ] || [ "$moreTickets" = "No" ] || [ "$moreTickets" = "NO" ] ; then
         break;
     fi
 done
 
-echo ""
-echo "----------------------------------"
-echo ""
+echo "${NL}verifying ${#QUERIES[@]} queries..."
 
-git log --oneline | grep -E "$query"
+for value in "${QUERIES[@]}"
+do
+    logs=$(git log --oneline | grep -E "$value")
 
-echo ""
-echo "----------------------------------"
-echo ""
+    if [ -z "$logs" ]; then
+        echo "${NL}[-] Query not found: ${value} ${NL}"
+        exit 1
+    fi
+done
+
+echo "[+] all queries look good"
+
+echo "${NL}querying logs..."
+
+function join_by { local IFS="$1"; shift; echo "$*"; }
+
+logs=$(git log --oneline | grep -E "$(join_by "|" "${QUERIES[@]}")")
+
+echo "[+] query complete"
+
+echo "${NL}----------------------------------${NL}"
+echo "${logs}"
+echo "${NL}----------------------------------${NL}"
+
+echo "Release the Kraken!"
