@@ -87,8 +87,11 @@ echo "[+] Release-$(date +'%m-%d-%Y') branch created"
 
 echo "${NL}Cherry picking commits..."
 
+# convert logs str to an array
+IFS=$'\n' read -rd '' -a logsArr <<<"$logs"
+
 # cherry pick the commits
-for value in "${logs[@]}"
+for value in "${logsArr[@]}";
 do
     commit=$(echo $value | cut -d ' ' -f 1)
     git cherry-pick $commit
@@ -100,6 +103,12 @@ do
         do
             if [ "$continue" = "continue" ]; then
                 git cherry-pick --continue
+                break
+            fi
+
+            if [ "$continue" = "skip" ]; then
+                git cherry-pick --skip
+                echo "${NL}[-] Cherry pick skipped"
                 break
             fi
 
@@ -115,8 +124,11 @@ do
                 echo "${NL}Invalid entry."
             fi
 
-            echo "Please resolve the conflicts and then enter 'continue' to continue cherry-picking"
-            read -p "or 'abort' to cancel the cherry-pick : " continue
+            echo "Please resolve the conflicts and do one of the following: "
+            echo "enter 'continue' to continue cherry-picking"
+            echo "enter 'skip' to skip the commit"
+            echo "or 'abort' to cancel the cherry-pick"
+            read -p "what would you like to do? : " continue
         done
     fi
 done
@@ -128,7 +140,9 @@ echo "[+] Commits cherry picked"
 echo "${NL}Creating PR..."
 
 # create the PR
-gh pr create --base $targetBranch --head "Release-$(date +'%m-%d-%Y')" --title "Release $(date +'%m-%d-%Y')" --body "Release $(date +'%m-%d-%Y')"
+body="$(join_by "${NL}" "${QUERIES[@]}")"
+
+gh pr create --base $targetBranch --head "Release-$(date +'%m-%d-%Y')" --title "Release $(date +'%m-%d-%Y')" --body "Release $(date +'%m-%d-%Y')${NL}${NL}${body}"
 if [ $? -ne 0 ]; then
     echo "${NL}[-] PR creation failed"
     exit 1
