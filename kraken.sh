@@ -29,18 +29,125 @@ do
     fi
 done
 
-echo "[+] all queries look good"
+echo "[+] All queries look good"
 
-echo "${NL}querying logs..."
+echo "${NL}Querying logs..."
 
 function join_by { local IFS="$1"; shift; echo "$*"; }
 
 logs=$(git log --oneline | grep -E "$(join_by "|" "${QUERIES[@]}")")
 
-echo "[+] query complete"
+echo "[+] Query complete"
 
 echo "${NL}----------------------------------${NL}"
 echo "${logs}"
 echo "${NL}----------------------------------${NL}"
 
-echo "Release the Kraken!"
+read -p "Would you like to create a release PR for these commits? (Y/n) " release
+
+if [ "$release" = "n" ] || [ "$release" = "N" ] || [ "$release" = "no" ] || [ "$release" = "No" ] || [ "$release" = "NO" ] ; then
+    echo "${NL}The Kraken will not be released"
+    exit 0
+fi
+
+# test that gh is installed on host machine
+if ! command -v gh &> /dev/null
+then
+    echo "${NL}[-] In order to create a PR, you must have gh installed on your machine"
+    echo "[-] Please visit https://cli.github.com/ to install gh"
+    exit 1
+fi
+
+read -p "${NL}What branch do you want to release to? " targetBranch
+
+# confirm the target branch exists
+if [ -z "$(git ls-remote --heads origin $targetBranch)" ]; then
+    echo "${NL}[-] $targetBranch branch not found"
+    exit 1
+fi
+
+echo "${NL}Creating release branch..."
+
+# create the new release branch from the target branch
+git switch $targetBranch
+git pull
+git switch -c "Release-$(date +'%m-%d-%Y')"
+if [ $? -ne 0 ]; then
+    echo "${NL}[-] Release branch creation failed"
+    exit 1
+fi
+
+git push -u origin "Release-$(date +'%m-%d-%Y')"
+if [ $? -ne 0 ]; then
+    echo "${NL}[-] Release branch push failed"
+    exit 1
+fi
+
+echo "[+] Release-$(date +'%m-%d-%Y') branch created"
+
+echo "${NL}Cherry picking commits..."
+
+# convert logs str to an array
+IFS=$'\n' read -rd '' -a logsArr <<<"$logs"
+
+# cherry pick the commits
+for value in "${logsArr[@]}";
+do
+    commit=$(echo $value | cut -d ' ' -f 1)
+    git cherry-pick $commit
+
+    if [ $? -ne 0 ]; then
+        continue=""
+
+        while :
+        do
+            if [ "$continue" = "continue" ]; then
+                git cherry-pick --continue
+                break
+            fi
+
+            if [ "$continue" = "skip" ]; then
+                git cherry-pick --skip
+                echo "${NL}[-] Cherry pick skipped"
+                break
+            fi
+
+            if [ "$continue" = "abort" ]; then
+                git cherry-pick --abort
+                echo "${NL}[-] Cherry pick aborted"
+                exit 1
+            fi
+
+            if [ "$continue" = "" ]; then
+                echo "${NL}Conflict(s) detected."
+            else
+                echo "${NL}Invalid entry."
+            fi
+
+            echo "Please resolve the conflicts and do one of the following: "
+            echo "enter 'continue' to continue cherry-picking"
+            echo "enter 'skip' to skip the commit"
+            echo "or 'abort' to cancel the cherry-pick"
+            read -p "what would you like to do? : " continue
+        done
+    fi
+done
+
+git push
+
+echo "[+] Commits cherry picked"
+
+echo "${NL}Creating PR..."
+
+# create the PR
+body="$(join_by "${NL}" "${QUERIES[@]}")"
+
+gh pr create --base $targetBranch --head "Release-$(date +'%m-%d-%Y')" --title "Release $(date +'%m-%d-%Y')" --body "Release $(date +'%m-%d-%Y')${NL}${NL}${body}"
+if [ $? -ne 0 ]; then
+    echo "${NL}[-] PR creation failed"
+    exit 1
+fi
+
+echo "[+] PR created"
+
+echo "${NL}Release the Kraken!${NL}"
