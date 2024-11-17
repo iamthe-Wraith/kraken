@@ -1,0 +1,80 @@
+#!/usr/bin/env node
+
+const fs = require('node:fs');
+const { resolve } = require('node:path');
+const { homedir } = require('node:os');
+
+const configPath = resolve(homedir(), '.kraken');
+const templatePath = resolve('config-template.json');
+
+/**
+ * read the config template file
+ * 
+ * @returns {Promise<object>} config template json
+ */
+function getConfigTemplate() {
+  return new Promise((resolve, reject) => {
+    fs.stat(templatePath, function (statsError, stats) {
+      if (statsError) return reject(statsError);
+
+      fs.open(templatePath, 'r', function (openError, fd) {
+        if (openError) return reject(openError);
+
+        const buffer = new Buffer.alloc(stats.size);
+
+        fs.read(fd, buffer, 0, buffer.length, null, function (readError, bytesRead, buffer) {
+          if (readError) return reject(readError);
+          let data;
+
+          try {
+            const bufferData = buffer.toString("utf8");
+            data = JSON.parse(bufferData); 
+          } finally {
+            fs.close(fd, (err) => {
+              if (err) throw err;
+            });
+          }
+
+          if (data) resolve(data);
+        });
+      });
+    })
+  });
+}
+
+/**
+ * begin the initialization process for the config file
+ * will write the config to the home directory if it doesn't exist
+ */
+function initConfig() {
+  // https://nodejs.org/api/fs.html#fsopenpath-flags-mode-callback
+  fs.open(configPath, 'wx', async (err, fd) => {
+    if (err) {
+      if (err.code === 'EEXIST') {
+        // TODO: add support for updating the config file with any new/missing fields
+        
+        console.warn('[!] config file already exists. skipping initialization');
+        return;
+      }
+  
+      throw err;
+    }
+
+    try {
+      const config = await getConfigTemplate();
+      
+      fs.write(fd, JSON.stringify(config, null, 2), 'utf-8', () => {
+        console.log('[+] config file initialized at ~/.kraken');
+      })
+    } catch (err) {
+      console.log('[-] error initializing config file');
+      console.error(err);
+    } finally {
+      fs.close(fd, (err) => {
+        if (err) throw err;
+      });
+    }
+  });
+}
+
+initConfig()

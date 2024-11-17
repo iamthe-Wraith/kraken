@@ -1,0 +1,30 @@
+{
+  "name": "kraken",
+  "version": "0.0.1",
+  "description": "",
+  "main": "src/index.ts",
+  "bin": {
+    "kraken": "bin/kraken"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "dev": "tsc -w",
+    "build": "tsc",
+    "postinstall": "node bin/postinstall"
+  },
+  "keywords": [
+    "cli",
+    "kraken"
+  ],
+  "author": "iamthe-Wraith",
+  "license": "GPL-3.0-or-later",
+  "devDependencies": {
+    "@types/node": "^22.9.0",
+    "@typescript-eslint/eslint-plugin": "^8.14.0",
+    "@typescript-eslint/parser": "^8.14.0",
+    "eslint": "^9.15.0",
+    "eslint-plugin-unused-imports": "^4.1.4"
+  }
+}
