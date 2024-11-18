@@ -15,6 +15,7 @@ export function cli(args: [string, string, string, ...string[]]) {
       flags: {},
       parameters: {},
     },
+    data: {},
   };
 
   if (ctx.command === null) {

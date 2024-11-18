@@ -65,11 +65,16 @@ class JiraStatusesCommand extends Command {
                 throw new FatalError('Story status not found');
             }
 
+            ctx.data.jira = {
+                ...(ctx.data.jira || {}),
+                statuses: story.statuses,
+            }
+
             Logger.log('\nJIRA STATUSES');
             Logger.log(`${'id'.padEnd(5, ' ')} | ${'name'}`);
             Logger.log('--------------------------------');
 
-            for (const { id, name } of story.statuses) {
+            for (const { id, name } of ctx.data.jira.statuses) {
                 Logger.log(`${id.padEnd(5, ' ')} | ${name}`);
             }
 

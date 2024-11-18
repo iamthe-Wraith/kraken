@@ -11,6 +11,7 @@ export interface IConfig {
   jiraProjectId: string;
   githubToken: string;
   githubUsername: string;
+  daysToKeepTempFiles: number;
 }
 
 export interface IContext {
@@ -19,4 +20,5 @@ export interface IContext {
   command: string | null;
   config?: IConfig;
   namespace: string;
+  data: Record<string, any>;
 }
