@@ -106,7 +106,8 @@ initConfig()
     });
   })
   .then(() => {
-    console.log('[+] kraken initialized');
+    console.log('\n[+] kraken initialized');
+    console.log('\nrun "kraken help" to get started');
   })
   .catch(err => {
     console.error('[-] error initializing kraken');

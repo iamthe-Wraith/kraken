@@ -48,7 +48,6 @@ export function cli(args: [string, string, string, ...string[]]) {
       }
     })
     .catch((err: Error) => {
-      Logger.error('>>>>>>>>>>>>>>>>>>>>>');
       Logger.error(err);
 
       if (err instanceof FatalError) process.exit(1);
