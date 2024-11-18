@@ -1,6 +1,8 @@
 {
   "jiraApiToken": "",
-  "jiraUrl": "",
+  "jiraBaseUrl": "",
+  "jiraEmail": "",
+  "jiraProjectId": "",
   "githubToken": "",
   "githubUsername": ""
 }

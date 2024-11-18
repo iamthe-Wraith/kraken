@@ -23,7 +23,7 @@ class HelpCommand extends Command {
     const { command = null } = ctx.arguments.arguments;
 
     if (command === null) {
-      this.printGenDocs();
+      this.printGenDocs(ctx);
     } else if (commands.has(command)) {
       (await import(`./${command}`) as any).help();
     } else {
@@ -33,7 +33,7 @@ class HelpCommand extends Command {
     return ctx;
   };
 
-  private printGenDocs = () => {
+  private printGenDocs = (ctx: IContext) => {
     let version = '';
   
     try {
@@ -48,16 +48,32 @@ class HelpCommand extends Command {
     Logger.log('Kraken');
     Logger.log(`${version}\n`);
   
-    Logger.log('COMMANDS:');
-    Logger.log('* for further documentation of each command, use the command|c argument');
-    Logger.log('kraken help --command [commandName]');
-    Logger.log('kraken help -c [commandName]\n');
+    if (!ctx.config) {
+      Logger.error('no config file found. run "npm install" to generate a config file.\n');
+    }
+
+    if (
+      ctx.config
+      && (
+        !ctx.config.jiraApiToken
+        || !ctx.config.jiraBaseUrl
+        || !ctx.config.jiraEmail
+      )
+    ) {
+      Logger.error('some required fields are missing from: ~/.kraken/config.json. add the missing fields and try again.\n');
+    }
+    
+    Logger.log('AVAILABLE COMMANDS:');
   
     commands.forEach(cmd => {
       if (cmd !== 'test' && cmd !== 'printversion') {
         Logger.log(`  ${cmd}`);
       }
     });
+
+    Logger.log('\n* for further documentation of each command, use the command|c argument');
+    Logger.log('kraken help --command [commandName]');
+    Logger.log('kraken help -c [commandName]');
   
     Logger.log('\n*******************************************\n');
   };

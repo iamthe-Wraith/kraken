@@ -6,7 +6,9 @@ export interface IArguments {
 
 export interface IConfig {
   jiraApiToken: string;
-  jiraUrl: string;
+  jiraBaseUrl: string;
+  jiraEmail: string;
+  jiraProjectId: string;
   githubToken: string;
   githubUsername: string;
 }
