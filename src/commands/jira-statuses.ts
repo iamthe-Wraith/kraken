@@ -8,7 +8,7 @@ class JiraStatusesCommand extends Command {
         super({
             pattern: '<statuses>',
             docs: `
-              Retrieves a list of all statuses from Jira for a given project.`
+              Retrieves a list of all statuses from Jira for a given project.`.trimStart()
         });
 
         this.argument('project|p', {

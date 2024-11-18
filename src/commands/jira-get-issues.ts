@@ -12,7 +12,7 @@ class JiraGetIssuesCommand extends Command {
         super({
             pattern: '<get-issues> <status>',
             docs: `
-              Retrieves a list of issues from Jira for a given project and status.`
+              Retrieves a list of issues from Jira for a given project and status.`.trimStart()
         });
 
         this.flag('write|w', {
