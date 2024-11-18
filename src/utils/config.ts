@@ -3,7 +3,7 @@ import path from 'path';
 import os from 'os';
 import { IConfig } from '../types';
 
-const ConfigPath = path.resolve(os.homedir(), '.charlie');
+const ConfigPath = path.resolve(os.homedir(), '.kraken', 'config.json');
 
 export const getConfig = (): Promise<IConfig> => new Promise<IConfig>((resolve, reject) => {
   fs.stat(ConfigPath, (statsError, stats) => {

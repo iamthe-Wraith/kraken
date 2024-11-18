@@ -26,5 +26,9 @@
     "@typescript-eslint/parser": "^8.14.0",
     "eslint": "^9.15.0",
     "eslint-plugin-unused-imports": "^4.1.4"
+  },
+  "dependencies": {
+    "arg": "^5.0.2",
+    "esm": "^3.2.25"
   }
 }

@@ -3,8 +3,9 @@
 const fs = require('node:fs');
 const { resolve } = require('node:path');
 const { homedir } = require('node:os');
+const { exec } = require('node:child_process');
 
-const configPath = resolve(homedir(), '.kraken');
+const dirPath = resolve(homedir(), '.kraken');
 const templatePath = resolve('config-template.json');
 
 /**
@@ -47,34 +48,67 @@ function getConfigTemplate() {
  * will write the config to the home directory if it doesn't exist
  */
 function initConfig() {
-  // https://nodejs.org/api/fs.html#fsopenpath-flags-mode-callback
-  fs.open(configPath, 'wx', async (err, fd) => {
-    if (err) {
-      if (err.code === 'EEXIST') {
-        // TODO: add support for updating the config file with any new/missing fields
-        
-        console.warn('[!] config file already exists. skipping initialization');
-        return;
-      }
-  
-      throw err;
+  return new Promise((resolve, reject) => {
+    // create the kraken directory
+    if (!fs.existsSync(dirPath)) {
+      fs.mkdirSync(dirPath, { recursive: true });
     }
 
-    try {
-      const config = await getConfigTemplate();
-      
-      fs.write(fd, JSON.stringify(config, null, 2), 'utf-8', () => {
-        console.log('[+] config file initialized at ~/.kraken');
-      })
-    } catch (err) {
-      console.log('[-] error initializing config file');
-      console.error(err);
-    } finally {
-      fs.close(fd, (err) => {
-        if (err) throw err;
-      });
+    if (!fs.existsSync(`${dirPath}/temp`)) {
+      fs.mkdirSync(`${dirPath}/temp`, { recursive: true });
     }
+
+    // https://nodejs.org/api/fs.html#fsopenpath-flags-mode-callback
+    fs.open(`${dirPath}/config.json`, 'wx', async (err, fd) => {
+      if (err) {
+        if (err.code === 'EEXIST') {
+          // TODO: add support for updating the config file with any new/missing fields
+
+          console.warn('[!] config file already exists. skipping initialization');
+          return;
+        }
+    
+        throw err;
+      }
+
+      try {
+        const config = await getConfigTemplate();
+        
+        fs.write(fd, JSON.stringify(config, null, 2), 'utf-8', () => {
+          console.log('[+] config file initialized at ~/.kraken/config.json');
+        })
+      } catch (err) {
+        console.log('[-] error initializing config file');
+        console.error(err);
+      } finally {
+        fs.close(fd, (err) => {
+          if (err) throw err;
+        });
+      }
+    });
   });
 }
 
 initConfig()
+  .then(() => {
+    return new Promise((resolve, reject) => {
+      exec('npm run build', (error, stdout, stderr) => {
+        if (error) {
+          console.error('[-] error running build command');
+          return reject(error);
+        }
+        if (stderr) {
+          console.error(stderr);
+        }
+        console.log(stdout);
+        resolve();
+      });
+    });
+  })
+  .then(() => {
+    console.log('[+] kraken initialized');
+  })
+  .catch(err => {
+    console.error('[-] error initializing kraken');
+    console.error(err);
+  });
