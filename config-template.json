@@ -4,5 +4,6 @@
   "jiraEmail": "",
   "jiraProjectId": "",
   "githubToken": "",
-  "githubUsername": ""
+  "githubUsername": "",
+  "daysToKeepTempFiles": 30
 }

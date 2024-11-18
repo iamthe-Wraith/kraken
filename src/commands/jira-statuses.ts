@@ -8,7 +8,7 @@ class JiraStatusesCommand extends Command {
         super({
             pattern: '<statuses>',
             docs: `
-              Retrieves a list of all statuses from Jira for a given project.`
+              Retrieves a list of all statuses from Jira for a given project.`.trimStart()
         });
 
         this.argument('project|p', {
@@ -65,11 +65,16 @@ class JiraStatusesCommand extends Command {
                 throw new FatalError('Story status not found');
             }
 
+            ctx.data.jira = {
+                ...(ctx.data.jira || {}),
+                statuses: story.statuses,
+            }
+
             Logger.log('\nJIRA STATUSES');
             Logger.log(`${'id'.padEnd(5, ' ')} | ${'name'}`);
             Logger.log('--------------------------------');
 
-            for (const { id, name } of story.statuses) {
+            for (const { id, name } of ctx.data.jira.statuses) {
                 Logger.log(`${id.padEnd(5, ' ')} | ${name}`);
             }
 
