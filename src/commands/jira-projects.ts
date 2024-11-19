@@ -8,7 +8,7 @@ class JiraProjectsCommand extends Command {
         super({
             pattern: '<jira-projects>',
             docs: `
-              Retrieves a list of all projects from Jira. This is helpful for finding the project ID for a given project.`.trimStart()
+              Retrieves a list of all your projects from Jira. This is helpful for finding the project ID for a given project.`.trimStart()
         });
     }
 

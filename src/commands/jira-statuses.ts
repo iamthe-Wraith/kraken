@@ -6,14 +6,20 @@ import { FatalError } from '../lib/error';
 class JiraStatusesCommand extends Command {
     constructor() {
         super({
-            pattern: '<statuses>',
+            pattern: '<jira-statuses>',
             docs: `
               Retrieves a list of all statuses from Jira for a given project.`.trimStart()
         });
 
         this.argument('project|p', {
             type: 'string',
-            description: 'The Jira project ID to get the statuses for. You can get this by running `kraken jira-projects`. If you will be using the same project id for multiple commands, you can set it as the jiraProjectId in ~/.kraken/config.json.',
+            description: [
+                'The Jira project ID to get the statuses for.',
+                '',
+                '💭 You can get this by running `kraken jira-projects`.',
+                '',
+                '✨ If you will be using the same project id for multiple commands, you can set it as the jiraProjectId in ~/.kraken/config.json.',
+            ].join('\n'),
         });
     }
 

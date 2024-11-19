@@ -14,25 +14,35 @@ class PrepareCommand extends Command {
         super({
             pattern: '<prepare>',
             docs: `
-              Retrieves a list of all statuses from Jira for a given project.`.trimStart()
+              Looks through your git log and prepares a list of commit hashes for commits that contained at least 1 of the provided queries.`.trimStart()
         });
 
         this.flag('write|w', {
-            description: 'Write the hashes to a file. If this flag is not set, the hashes will only be printed to the console.',
+            description: [
+                'Write the hashes to a file. If this flag is not set, the hashes will only be printed to the console.',
+                '',
+                '💾 Files are saved in the ~/.kraken/temp directory',
+                '👀 see the `filename` argument for more information',
+            ].join('\n'),
         });
 
         this.argument('filename|f', {
             type: 'string',
             description: [
                 'The name of the file to use as input for this command. This file must be a valid JSON file located in the ~/.kraken/temp directory.',
+                '💭 (use `kraken files -i` to list the files that are available)',
                 '',
-                'If this argument is not provided, you will be prompted to enter enter the search queries manually.'
+                'ℹ️ If this argument is not provided, you will be prompted to enter enter the search queries manually.'
             ].join('\n'),
         });
 
         this.argument('write-to|t', {
             type: 'string',
-            description: 'The filename to write the hashes to. This is argument is not set, filename will default to the current timestamp (hashes-<timestamp>.json). Files are saved in the ~/.kraken/temp directory.',
+            description: [
+                'The filename to write the hashes to. If this argument is not set, filename will default to the current timestamp (hashes-<timestamp>.json).',
+                '',
+                '💾 Files are saved in the ~/.kraken/temp directory',
+            ].join('\n'),
         });
     }
 

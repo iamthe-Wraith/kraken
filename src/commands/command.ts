@@ -138,7 +138,7 @@ export class Command {
     } else {
       Logger.log('\n*******************************************\n');
 
-      Logger.log(`${this.name}\n`);
+      Logger.log(`🐙 kraken ${this.name}\n`);
       Logger.log(`${this.docs}\n`);
 
       if (Object.keys(this.parser.parameters).length > 0) {
