@@ -28,6 +28,12 @@ export interface IHash {
   message: string;
 }
 
+export interface IProject {
+  id: string;
+  key: string;
+  name: string;
+}
+
 export interface IQuery {
   key: string;
   expectToFindInGitLog: boolean;
@@ -43,4 +49,9 @@ export interface IReport {
   found: string[];
   notFound: string[];
   hashes: IHash[];
+}
+
+export interface IStatus {
+  id: string;
+  name: string;
 }

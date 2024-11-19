@@ -142,31 +142,34 @@ export class Command {
       Logger.log(`${this.docs}\n`);
 
       if (Object.keys(this.parser.parameters).length > 0) {
-        Logger.log('parameters (listed in the order they must be entered) :');
+        Logger.log('...........................................\n');
+        Logger.log('✅ PARAMETERS (listed in the order they must be entered) :\n');
 
         for (const i in this.parser.parameters) {
           const isRequired = this.parser.pattern.filter(pattern => pattern.name === i)[0].required;
 
-          Logger.log(`\t${i} <${this.parser.parameters[i].type}> ${isRequired ? '' : '[optional]'}`);
-          Logger.log(`\t${'description' in this.parser.parameters[i] ? this.parser.parameters[i].description : ''}\n`);
+          Logger.log(`${i} <${this.parser.parameters[i].type}> ${isRequired ? '' : '[optional]'}`);
+          Logger.log(`${'description' in this.parser.parameters[i] ? this.parser.parameters[i].description : ''}\n`);
         }
       }
 
       if (Object.keys(this.parser.arguments).length > 0) {
-        Logger.log('arguments:');
+        Logger.log('...........................................\n');
+        Logger.log('✅ ARGUMENTS :\n');
 
         for (const i in this.parser.arguments) {
-          Logger.log(`\t--${i}${'shortHand' in this.parser.arguments[i] && this.parser.arguments[i].shortHand ? `|-${this.parser.arguments[i].shortHand}` : ''} <${this.parser.arguments[i].type}>`);
-          Logger.log(`\t${'description' in this.parser.arguments[i] ? this.parser.arguments[i].description : ''}\n`);
+          Logger.log(`--${i}${'shortHand' in this.parser.arguments[i] && this.parser.arguments[i].shortHand ? `|-${this.parser.arguments[i].shortHand}` : ''} <${this.parser.arguments[i].type}>`);
+          Logger.log(`${'description' in this.parser.arguments[i] ? this.parser.arguments[i].description : ''}\n`);
         }
       }
 
       if (Object.keys(this.parser.flags).length > 0) {
-        Logger.log('flags:');
+        Logger.log('...........................................\n');
+        Logger.log('✅ FLAGS :\n');
 
         for (const i in this.parser.flags) {
-          Logger.log(`\t--${i}${'shortHand' in this.parser.flags[i] && this.parser.flags[i].shortHand ? `|-${this.parser.flags[i].shortHand}` : ''}`);
-          Logger.log(`\t${'description' in this.parser.flags[i] ? this.parser.flags[i].description : ''}\n`);
+          Logger.log(`--${i}${'shortHand' in this.parser.flags[i] && this.parser.flags[i].shortHand ? `|-${this.parser.flags[i].shortHand}` : ''}`);
+          Logger.log(`${'description' in this.parser.flags[i] ? this.parser.flags[i].description : ''}\n`);
         }
       }
 
