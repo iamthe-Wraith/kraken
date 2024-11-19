@@ -22,3 +22,25 @@ export interface IContext {
   namespace: string;
   data: Record<string, any>;
 }
+
+export interface IHash {
+  hash: string;
+  message: string;
+}
+
+export interface IQuery {
+  key: string;
+  expectToFindInGitLog: boolean;
+}
+
+export interface IIssue extends IQuery {
+  id: string;
+  link: string;
+  summary: string;
+}
+
+export interface IReport {
+  found: string[];
+  notFound: string[];
+  hashes: IHash[];
+}

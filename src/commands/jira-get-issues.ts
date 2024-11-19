@@ -19,7 +19,7 @@ class JiraGetIssuesCommand extends Command {
             description: 'Write the issues to a file. If this flag is not set, the issues will only be printed to the console.',
         });
 
-        this.argument('filename|f', {
+        this.argument('write-to|t', {
             type: 'string',
             description: 'The filename to write the issues to. This is argument is not set, filename will default to the current timestamp (issues-<timestamp>.json). Files are saved in the ~/.kraken/temp directory.',
         });
@@ -91,6 +91,7 @@ class JiraGetIssuesCommand extends Command {
                     link: issue.self,   
                     key: issue.key,
                     summary: issue.fields.summary,
+                    expectToFindInGitLog: true,
                 })),
             }
 
