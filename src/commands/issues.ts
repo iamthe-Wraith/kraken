@@ -17,8 +17,12 @@ class IssuesCommand extends Command {
               Retrieves a list of issues from a given platform.`.trimStart()
         });
 
-        this.flag('write|w', {
-            description: 'Write the issues to a file. If this flag is not set, the issues will only be printed to the console.',
+        this.parameter('platform', {
+            description: [
+                'the name of the platform where the issues exist.',
+                '',
+                `supported values are: ${Array.from(this.platforms).join(', ')}.`,
+            ].join('\n'),
         });
 
         this.argument('project|p', {
@@ -48,12 +52,8 @@ class IssuesCommand extends Command {
             ].join('\n'),
         });
 
-        this.parameter('platform', {
-            description: [
-                'the name of the platform where the issues exist.',
-                '',
-                `supported values are: ${Array.from(this.platforms).join(', ')}.`,
-            ].join('\n'),
+        this.flag('write|w', {
+            description: 'Write the issues to a file. If this flag is not set, the issues will only be printed to the console.',
         });
     }
 

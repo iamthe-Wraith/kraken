@@ -28,6 +28,12 @@ export interface IHash {
   message: string;
 }
 
+export interface IProject {
+  id: string;
+  key: string;
+  name: string;
+}
+
 export interface IQuery {
   key: string;
   expectToFindInGitLog: boolean;
