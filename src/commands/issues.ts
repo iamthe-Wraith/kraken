@@ -66,6 +66,10 @@ class IssuesCommand extends Command {
             throw new FatalError('No platform found. You you must specify the platform you want to get the issues for.');
         }
 
+        if (!this.platforms.has(ctx.arguments.parameters.platform)) {
+            throw new FatalError(`Unsupported platform: ${ctx.arguments.parameters.platform}. Supported platforms are: ${Array.from(this.platforms).join(', ')}.`);
+        }
+
         if (ctx.arguments.parameters.platform === 'jira') {
             if (!ctx.config.jiraApiToken) {
                 throw new FatalError('No Jira API token found. Please update ~/.kraken/config.json with your Jira API token.');
@@ -95,7 +99,7 @@ class IssuesCommand extends Command {
                     break;
                 }
                 default: {
-                    throw new FatalError(`Unsupported platform: ${ctx.arguments.parameters.platform}`);
+                    throw new FatalError(`Unsupported platform: ${ctx.arguments.parameters.platform}. Supported platforms are: ${Array.from(this.platforms).join(', ')}.`);
                 }
             }
 

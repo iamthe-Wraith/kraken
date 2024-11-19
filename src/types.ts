@@ -50,3 +50,8 @@ export interface IReport {
   notFound: string[];
   hashes: IHash[];
 }
+
+export interface IStatus {
+  id: string;
+  name: string;
+}

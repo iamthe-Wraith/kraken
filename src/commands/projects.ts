@@ -28,7 +28,7 @@ class ProjectsCommand extends Command {
         }
     
         if (!ctx.arguments.parameters.platform) {
-            throw new FatalError('No platform found. You you must specify the platform you want to get the issues for.');
+            throw new FatalError('No platform found. You you must specify the platform you want to get the projects for.');
         }
 
         if (!this.platforms.has(ctx.arguments.parameters.platform)) {
@@ -60,6 +60,7 @@ class ProjectsCommand extends Command {
                     break;
                 }
                 default:
+                    throw new FatalError(`Unsupported platform: ${ctx.arguments.parameters.platform}. Supported platforms are: ${Array.from(this.platforms).join(', ')}.`);
                     break;
             }
 
