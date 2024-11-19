@@ -4,14 +4,14 @@ export class Logger {
   }
 
   static error(...args: any[]) {
-    console.error('\n[-] ', ...args);
+    console.error('\n❌ ', ...args);
   }
 
   static success(...args: any[]) {
-    console.error('\n[+] ', ...args);
+    console.error('\n🎉 ', ...args);
   }
 
   static warning(...args: any[]) {
-    console.error('\n[!] ', ...args);
+    console.error('\n🚧 ', ...args);
   }
 }

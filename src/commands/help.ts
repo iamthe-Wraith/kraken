@@ -45,7 +45,7 @@ class HelpCommand extends Command {
   
     Logger.log('\n*******************************************\n');
   
-    Logger.log('Kraken');
+    Logger.log('Kraken 🐙');
     Logger.log(`${version}\n`);
   
     if (!ctx.config) {
@@ -63,7 +63,7 @@ class HelpCommand extends Command {
       Logger.error('some required fields are missing from: ~/.kraken/config.json. add the missing fields and try again.\n');
     }
     
-    Logger.log('AVAILABLE COMMANDS:');
+    Logger.log('AVAILABLE COMMANDS:\n');
   
     commands.forEach(cmd => {
       if (cmd !== 'test' && cmd !== 'printversion') {

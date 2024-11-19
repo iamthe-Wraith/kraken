@@ -10,7 +10,7 @@ import dayjs from 'dayjs';
 class JiraGetIssuesCommand extends Command {
     constructor() {
         super({
-            pattern: '<get-issues> <status>',
+            pattern: '<jira-get-issues> <status>',
             docs: `
               Retrieves a list of issues from Jira for a given project and status.`.trimStart()
         });
@@ -19,14 +19,26 @@ class JiraGetIssuesCommand extends Command {
             description: 'Write the issues to a file. If this flag is not set, the issues will only be printed to the console.',
         });
 
-        this.argument('filename|f', {
+        this.argument('write-to|t', {
             type: 'string',
-            description: 'The filename to write the issues to. This is argument is not set, filename will default to the current timestamp (issues-<timestamp>.json). Files are saved in the ~/.kraken/temp directory.',
+            description: [
+                'The filename to write the issues to.',
+                '',
+                'ℹ️ If this argument is not set, `filename` will default to the current timestamp (issues-<timestamp>.json).',
+                '',
+                '💾 Files are saved in the ~/.kraken/temp directory',
+            ].join('\n'),
         });
 
         this.argument('project|p', {
             type: 'string',
-            description: 'The Jira project ID to get the issues for. You can get this by running `kraken jira-projects`. If you will be using the same project id for multiple commands, you can set it as the jiraProjectId in ~/.kraken/config.json.',
+            description: [
+                'The Jira project ID to get the issues for.',
+                '',
+                'You can get this by running `kraken jira-projects`.',
+                '',
+                'If you will be using the same project id for multiple commands, you can set it as the jiraProjectId in ~/.kraken/config.json.',
+            ].join('\n'),
         });
 
         this.parameter('status', {
@@ -91,6 +103,7 @@ class JiraGetIssuesCommand extends Command {
                     link: issue.self,   
                     key: issue.key,
                     summary: issue.fields.summary,
+                    expectToFindInGitLog: true,
                 })),
             }
 
