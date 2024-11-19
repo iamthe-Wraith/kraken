@@ -1,6 +1,7 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
+import readline from 'readline';
 import { execSync } from 'child_process';
 import { IContext, IIssue, IQuery, IReport } from '../types';
 import { Command } from './command';
@@ -82,19 +83,22 @@ class PrepareCommand extends Command {
 
     main = async (ctx: IContext): Promise<IContext> => {
         try {
-            let data: IQuery[];
+            let data: IQuery[] = [];
 
-            if (ctx.data.issues.length) {
+            if ((ctx.data.issues || []).length) {
                 data = ctx.data.issues;
             } else {
-                data = [];
-
-                // TODO: prompt the user for each query (like current kraken does)
+                data = await this.promptForQuery();
 
                 // TODO: add support to past multiple queries
             }
 
-            ctx.data.report = this.searchGitLog(data);
+            if (!data.length) {
+                Logger.log('\nNo queries provided. The Kraken will not be released... 🐙');
+                return ctx;
+            }
+
+            ctx.data.report = this.getGitLogSearchReport(data);
 
             if (ctx.data.report.notFound.length) {
                 this.printFoundReport(ctx.data.report);
@@ -138,6 +142,54 @@ class PrepareCommand extends Command {
         }
     };
 
+    private getGitLogSearchReport = (issues: IQuery[]) => {
+        const report: IReport = {
+            found: [],
+            notFound: [],
+            hashes: [],
+        }
+
+        // search for each issue in the git log to confirm they are all found
+        for (const issue of issues) {
+            if (!issue.expectToFindInGitLog) {
+                continue;
+            }
+
+            try {
+                const commits = this.searchGitLog(issue.key);
+
+                if (commits.length) {
+                    report.found.push(issue.key);
+                } else {
+                    report.notFound.push(issue.key);
+                }
+            } catch (err) {
+                report.notFound.push(issue.key);
+            }
+        }
+
+        if (report.notFound.length) {
+            return report;
+        }
+        
+        const query = issues
+            .filter(issue => issue.expectToFindInGitLog)
+            .map(issue => issue.key).join('|');
+
+        const commits = this.searchGitLog(query);
+
+        for (const commit of commits) {
+            const [hash, ...msg] = commit.split(' ');
+
+            report.hashes.push({
+                hash,
+                message: msg.join(' '),
+            });
+        }
+
+        return report;
+    }
+
     private printFoundReport = (report: IReport) => {
         if (report.found.length) {
             Logger.log('\nKEYS FOUND');
@@ -175,55 +227,58 @@ class PrepareCommand extends Command {
         Logger.log('\n----------------oldest----------------');
     }
 
-    private searchGitLog = (issues: IQuery[]) => {
-        const report: IReport = {
-            found: [],
-            notFound: [],
-            hashes: [],
-        }
-
-        // search for each issue in the git log to confirm they are all found
-        for (const issue of issues) {
-            if (!issue.expectToFindInGitLog) {
-                continue;
-            }
-
-            try {
-                const command = `git log --oneline | grep -E "${issue.key}"`;
-                const result = execSync(command, { encoding: 'utf-8' });
-
-                if (result) {
-                    report.found.push(issue.key);
-                } else {
-                    report.notFound.push(issue.key);
-                }
-            } catch (err) {
-                report.notFound.push(issue.key);
-            }
-        }
-
-        if (report.notFound.length) {
-            return report;
-        }
-        
-        const query = issues
-            .filter(issue => issue.expectToFindInGitLog)
-            .map(issue => issue.key).join('|');
-        const command = `git log --oneline | grep -E "${query}"`;
-        const results = execSync(command, { encoding: 'utf-8' });
-
-        const commits = results.split('\n').filter(Boolean);
-
-        for (const commit of commits) {
-            const [hash, ...msg] = commit.split(' ');
-
-            report.hashes.push({
-                hash,
-                message: msg.join(' '),
+    private promptForQuery = (inputs: IQuery[] = []) => new Promise<IQuery[]>((resolve, reject) => {
+        try {
+            const rd = readline.createInterface({
+                input: process.stdin,
+                output: process.stdout
             });
-        }
+    
+            rd.question('\nEnter the text to query for: ', (q: string) => {
+                let tryAgain = false;
+                const query = q.trim();
+                if (query) {
+                    const commits = this.searchGitLog(query);
 
-        return report;
+                    if (commits.length) {
+                        inputs.push({
+                            key: query,
+                            expectToFindInGitLog: true
+                        });
+                    } else {
+                        tryAgain = true;
+                        Logger.error(`"${query}" was not found in git log`);
+                    }
+                }
+                
+                const question = tryAgain
+                    ? 'Do you want to try again? (Y/n): '
+                    : 'Do you have more queries to enter? (Y/n): ';
+
+                rd.question(question, (answer: string) => {
+                    const normalized = answer.trim().toLowerCase();
+                    rd.close();
+
+                    if (normalized === 'n') {
+                        resolve(inputs);
+                    } else {
+                        this.promptForQuery().then(resolve);
+                    }
+                });
+            });
+        } catch (err) {
+            reject(err);
+        }
+    });
+
+    private searchGitLog = (query: string) => {
+        try {
+            const command = `git log --oneline | grep -E "${query}"`;
+            const results = execSync(command, { encoding: 'utf-8' });
+            return results.split('\n').filter(Boolean);
+        } catch (err) {
+            return [];
+        }
     }
 }
 
