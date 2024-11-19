@@ -197,8 +197,14 @@ class IssuesCommand extends Command {
         try {
             const projectId = ctx.arguments.arguments.project || ctx.config!.jiraProjectId;
 
+            let query = `project = ${projectId}`;
+
+            if (ctx.arguments.arguments.status) {
+                query += ` AND status = ${ctx.arguments.arguments.status}`;
+            }
+
             const queryParams = new URLSearchParams({
-                'jql': `project = ${projectId} AND status = ${ctx.arguments.arguments.status}`
+                'jql': query,
             });
 
             const res = await fetch(`${ctx.config!.jiraBaseUrl}/rest/api/3/search?${queryParams.toString()}`, {
