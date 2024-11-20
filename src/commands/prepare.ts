@@ -76,6 +76,14 @@ class PrepareCommand extends Command {
                     if (typeof issue.key !== 'string') {
                         throw new FatalError('Invalid issue format. Expected a string for the issue key.');
                     }
+
+                    if (typeof issue.keyOverride !== 'string') {
+                        throw new FatalError('Invalid issue format. Expected a string for the issue key override.');
+                    }
+
+                    if (!issue.key && !issue.keyOverride) {
+                        throw new FatalError('Invalid issue format. Expected a non-empty string for the issue key or key override.');
+                    }
                 }
 
                 ctx.data.issues = issues;
@@ -165,16 +173,18 @@ class PrepareCommand extends Command {
                 continue;
             }
 
+            const key = issue.keyOverride || issue.key;
+
             try {
-                const commits = this.searchGitLog(issue.key);
+                const commits = this.searchGitLog(key);
 
                 if (commits.length) {
-                    report.found.push(issue.key);
+                    report.found.push(key);
                 } else {
-                    report.notFound.push(issue.key);
+                    report.notFound.push(key);
                 }
             } catch (err) {
-                report.notFound.push(issue.key);
+                report.notFound.push(key);
             }
         }
 
@@ -184,7 +194,8 @@ class PrepareCommand extends Command {
         
         const query = issues
             .filter(issue => issue.expectToFindInGitLog)
-            .map(issue => issue.key).join('|');
+            .map(issue => issue.keyOverride || issue.key)
+            .join('|');
 
         const commits = this.searchGitLog(query);
 
@@ -253,6 +264,7 @@ class PrepareCommand extends Command {
                     if (commits.length) {
                         inputs.push({
                             key: query,
+                            keyOverride: '',
                             expectToFindInGitLog: true
                         });
                     } else {

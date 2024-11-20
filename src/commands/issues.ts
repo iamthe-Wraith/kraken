@@ -225,6 +225,7 @@ class IssuesCommand extends Command {
                 id: issue.id,
                 link: issue.self,   
                 key: issue.key,
+                keyOverride: '',
                 summary: issue.fields.summary,
                 expectToFindInGitLog: true,
             }));
