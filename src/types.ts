@@ -39,6 +39,17 @@ export interface IQuery {
   expectToFindInGitLog: boolean;
 }
 
+export interface IHash {
+  hash: string;
+  message: string;
+}
+
+export interface IPreparedData {
+  source: string;
+  queries: string[];
+  hashes: IHash[];
+}
+
 export interface IIssue extends IQuery {
   id: string;
   link: string;

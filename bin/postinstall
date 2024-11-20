@@ -3,108 +3,143 @@
 const fs = require('node:fs');
 const { resolve } = require('node:path');
 const { homedir } = require('node:os');
-const { exec } = require('node:child_process');
+const { execSync } = require('node:child_process');
 
 const dirPath = resolve(homedir(), '.kraken');
-const templatePath = resolve('config-template.json');
+const configTemplatePath = resolve('config-template.json');
+const prTemplatePath = resolve('pr-template.md');
 
-/**
- * read the config template file
- * 
- * @returns {Promise<object>} config template json
- */
-function getConfigTemplate() {
-  return new Promise((resolve, reject) => {
-    fs.stat(templatePath, function (statsError, stats) {
-      if (statsError) return reject(statsError);
+const getConfigTemplate = async () => new Promise((resolve, reject) => {
+  fs.stat(configTemplatePath, function (statsError, stats) {
+    if (statsError) return reject(statsError);
 
-      fs.open(templatePath, 'r', function (openError, fd) {
-        if (openError) return reject(openError);
+    fs.open(configTemplatePath, 'r', function (openError, fd) {
+      if (openError) return reject(openError);
 
-        const buffer = new Buffer.alloc(stats.size);
+      const buffer = new Buffer.alloc(stats.size);
 
-        fs.read(fd, buffer, 0, buffer.length, null, function (readError, bytesRead, buffer) {
-          if (readError) return reject(readError);
-          let data;
+      fs.read(fd, buffer, 0, buffer.length, null, function (readError, bytesRead, buffer) {
+        if (readError) return reject(readError);
+        let data;
 
-          try {
-            const bufferData = buffer.toString("utf8");
-            data = JSON.parse(bufferData); 
-          } finally {
-            fs.close(fd, (err) => {
-              if (err) throw err;
-            });
-          }
-
-          if (data) resolve(data);
-        });
-      });
-    })
-  });
-}
-
-/**
- * begin the initialization process for the config file
- * will write the config to the home directory if it doesn't exist
- */
-function initConfig() {
-  return new Promise((resolve, reject) => {
-    // create the kraken directory
-    if (!fs.existsSync(dirPath)) {
-      fs.mkdirSync(dirPath, { recursive: true });
-    }
-
-    if (!fs.existsSync(`${dirPath}/temp`)) {
-      fs.mkdirSync(`${dirPath}/temp`, { recursive: true });
-    }
-
-    // https://nodejs.org/api/fs.html#fsopenpath-flags-mode-callback
-    fs.open(`${dirPath}/config.json`, 'wx', async (err, fd) => {
-      if (err) {
-        if (err.code === 'EEXIST') {
-          // TODO: add support for updating the config file with any new/missing fields
-
-          console.warn('[!] config file already exists. skipping initialization');
-          return;
+        try {
+          const bufferData = buffer.toString("utf8");
+          data = JSON.parse(bufferData); 
+        } finally {
+          fs.close(fd, (err) => {
+            if (err) throw err;
+          });
         }
-    
-        throw err;
-      }
 
-      try {
-        const config = await getConfigTemplate();
-        
-        fs.write(fd, JSON.stringify(config, null, 2), 'utf-8', () => {
-          console.log('[+] config file initialized at ~/.kraken/config.json');
-        })
-      } catch (err) {
-        console.log('[-] error initializing config file');
-        console.error(err);
-      } finally {
-        fs.close(fd, (err) => {
-          if (err) throw err;
-        });
-      }
-    });
-  });
-}
-
-initConfig()
-  .then(() => {
-    return new Promise((resolve, reject) => {
-      exec('npm run build', (error, stdout, stderr) => {
-        if (error) {
-          console.error('[-] error running build command');
-          return reject(error);
-        }
-        if (stderr) {
-          console.error(stderr);
-        }
-        console.log(stdout);
-        resolve();
+        if (data) resolve(data);
       });
     });
   })
+});
+
+const getPRTemplate = async () => new Promise((resolve, reject) => {
+  fs.stat(prTemplatePath, function (statsError, stats) {
+    if (statsError) return reject(statsError);
+
+    fs.open(prTemplatePath, 'r', function (openError, fd) {
+      if (openError) return reject(openError);
+
+      const buffer = new Buffer.alloc(stats.size);
+
+      fs.read(fd, buffer, 0, buffer.length, null, function (readError, bytesRead, buffer) {
+        if (readError) return reject(readError);
+        let data;
+
+        try {
+          data = buffer.toString("utf8");
+        } finally {
+          fs.close(fd, (err) => {
+            if (err) throw err;
+          });
+        }
+
+        if (data) resolve(data);
+      });
+    });
+  })
+});
+
+const createConfig = async () => new Promise((resolve, reject) => {
+  fs.open(`${dirPath}/config.json`, 'wx', async (err, fd) => {
+    if (err) {
+      if (err.code === 'EEXIST') {
+        // TODO: add support for updating the config file with any new/missing fields
+
+        console.warn('[!] config file already exists. skipping creating it');
+      }
+  
+      throw err;
+    }
+
+    try {
+      const config = await getConfigTemplate();
+      
+      fs.write(fd, JSON.stringify(config, null, 2), 'utf-8', () => {
+        console.log('[+] config file initialized at ~/.kraken/config.json');
+      })
+    } catch (err) {
+      console.log('[-] error initializing config file');
+      console.error(err);
+    } finally {
+      fs.close(fd, (err) => {
+        if (err) throw err;
+
+        resolve();
+      });
+    }
+  });
+});
+
+const createPRTemplate = async () => new Promise((resolve, reject) => {
+  fs.open(`${dirPath}/pr-template.md`, 'wx', async (err, fd) => {
+    if (err) {
+      if (err.code === 'EEXIST') {
+        console.warn('[!] pr template file already exists. skipping creating it');
+      }
+  
+      throw err;
+    }
+
+    try {
+      const template = await getPRTemplate();
+      
+      fs.write(fd, template, 'utf-8', () => {
+        console.log('[+] pr template file initialized at ~/.kraken/pr-template.md');
+      })
+    } catch (err) {
+      console.log('[-] error initializing pr template file');
+      console.error(err);
+    } finally {
+      fs.close(fd, (err) => {
+        if (err) throw err;
+
+        resolve();
+      });
+    }
+  });
+});
+
+const init = async () => {
+  // create the kraken directory
+  if (!fs.existsSync(dirPath)) {
+    fs.mkdirSync(dirPath, { recursive: true });
+  }
+
+  if (!fs.existsSync(`${dirPath}/temp`)) {
+    fs.mkdirSync(`${dirPath}/temp`, { recursive: true });
+  }
+
+  await createConfig();
+  await createPRTemplate();
+  await execSync('npm run build', { encoding: 'utf-8' });
+}
+
+init()
   .then(() => {
     console.log('\n[+] kraken initialized');
     console.log('\nrun "kraken help" to get started');
