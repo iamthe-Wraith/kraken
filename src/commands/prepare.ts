@@ -138,7 +138,7 @@ class PrepareCommand extends Command {
                             source: ctx.arguments.arguments.filename || 'manual', 
                             queries: data
                                 .filter(query => query.expectToFindInGitLog)
-                                .map(query => query.key),
+                                .map(query => query.keyOverride || query.key),
                             hashes: ctx.data.report.hashes,
                         }
 
@@ -191,20 +191,32 @@ class PrepareCommand extends Command {
         if (report.notFound.length) {
             return report;
         }
-        
-        const query = issues
+
+        const keys = issues
             .filter(issue => issue.expectToFindInGitLog)
-            .map(issue => issue.keyOverride || issue.key)
-            .join('|');
+            .map(issue => issue.keyOverride || issue.key);
+        
+        const query = keys.join('|');
 
         const commits = this.searchGitLog(query);
 
         for (const commit of commits) {
             const [hash, ...msg] = commit.split(' ');
 
+            const message = msg.join(' ');
+
+            let matches: string[] = [];
+
+            for (const key of keys) {
+                if (message.includes(key)) {
+                    matches.push(key);
+                }
+            }
+
             report.hashes.push({
                 hash,
-                message: msg.join(' '),
+                message,
+                matches,
             });
         }
 

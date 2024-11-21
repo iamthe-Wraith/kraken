@@ -4,5 +4,6 @@ export const commands = new Set([
     'issues',
     'prepare',
     'projects',
+    'release',
     'statuses',
   ]);

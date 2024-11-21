@@ -26,6 +26,7 @@ export interface IContext {
 export interface IHash {
   hash: string;
   message: string;
+  matches: string[];
 }
 
 export interface IProject {
@@ -38,6 +39,17 @@ export interface IQuery {
   key: string;
   keyOverride: string;
   expectToFindInGitLog: boolean;
+}
+
+export interface IHash {
+  hash: string;
+  message: string;
+}
+
+export interface IPreparedData {
+  source: string;
+  queries: string[];
+  hashes: IHash[];
 }
 
 export interface IIssue extends IQuery {
