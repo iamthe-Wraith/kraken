@@ -26,6 +26,7 @@ export interface IContext {
 export interface IHash {
   hash: string;
   message: string;
+  matches: string[];
 }
 
 export interface IProject {

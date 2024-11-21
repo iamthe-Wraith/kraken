@@ -14,8 +14,11 @@ class ReleaseCommand extends Command {
     constructor() {
         super({
             pattern: '<release> <platform> <target-branch>',
-            docs: `
-              Pushes the current branch to the remote repository, then creates a pull|merge request on the specified platform.`.trimStart()
+            docs: [
+                'Pushes the current branch to the remote repository, then creates a pull|merge request on the specified platform.',
+                '',
+                'This command requires the PR template file found at ~/.kraken/pr-template.md. If not found, the command will exit and no PR will be created.',
+            ].join('\n')
         });
 
         this.parameter('platform', {
@@ -110,6 +113,8 @@ class ReleaseCommand extends Command {
             ctx.data.prepared = mostRecentFile;
         }
 
+
+
         return ctx;
     }
 
@@ -153,34 +158,39 @@ class ReleaseCommand extends Command {
                 Logger.log('attempting cherry picks...');
             }
 
-            Logger.log('creating pull request...');
-            Logger.log('data', data);
-            Logger.log('repo', repo);
-            Logger.log('prBody', prBody);
-            Logger.log('currentBranch', currentBranch);
+            const prTitle = `${ctx.arguments.parameters['target-branch']} release ${dayjs().format('MMM-DD-YYYY')}`
 
-            // const res = await fetch(`https://api.github.com/repos/${repo.owner}/${repo.repo}/pulls`, {
-            //     method: 'POST',
-            //     headers: {
-            //         'Authorization': `token ${ctx.config!.githubToken}`,
-            //         'Accept': 'application/vnd.github.v3+json'
-            //     },
-            //     body: JSON.stringify({
-            //         title: `Pull request from ${currentBranch.trim()}`,
-            //         head: currentBranch.trim(),
-            //         body: prBody,
-            //         base: ctx.arguments.parameters['target-branch'],
-            //         draft: true,
-            //     })
-            // });
+            this.writeRelease({
+                currentBranch,
+                targetBranch: ctx.arguments.parameters['target-branch'],
+                prTitle,
+                data,
+                repo,
+                prBody
+            });
+
+            const res = await fetch(`https://api.github.com/repos/${repo.owner}/${repo.repo}/pulls`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token ${ctx.config!.githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json'
+                },
+                body: JSON.stringify({
+                    title: prTitle,
+                    head: currentBranch.trim(),
+                    body: prBody,
+                    base: ctx.arguments.parameters['target-branch'],
+                    draft: true,
+                })
+            });
     
-            // if (!res.ok) {
-            //     const error = await res.text();
-            //     throw new FatalError(`Failed to create pull request: ${error}`);
-            // }
+            if (!res.ok) {
+                const error = await res.text();
+                throw new FatalError(`Failed to create pull request: ${error}`);
+            }
     
-            // const pr = await res.json();
-            // Logger.success(`Successfully created pull request: ${pr.html_url}`);
+            const pr = await res.json();
+            Logger.success(`Successfully created pull request: ${pr.html_url}`);
         } catch (err) {
             if (err instanceof FatalError) {
                 throw err;
@@ -215,9 +225,57 @@ class ReleaseCommand extends Command {
     }
 
     private getPullRequestBody = (data: IPreparedData): string => {
-        console.log('data', data);
+        const prTemplateFilePath = path.join(os.homedir(), '.kraken', 'pr-template.md');
 
-        return '';
+        if (!fs.existsSync(prTemplateFilePath)) {
+            throw new FatalError('failed to create GitHub pull request. PR template file not found.');
+        }
+
+        const prTemplate = fs.readFileSync(prTemplateFilePath, 'utf8');
+        
+        if (!prTemplate) {
+            throw new FatalError('failed to create GitHub pull request. PR template file is empty.');
+        }
+
+        let prBody = prTemplate;
+
+        if (prTemplate.includes('{each}')) {
+            if (!prTemplate.includes('{end:each}')) {
+                throw new FatalError('failed to create GitHub pull request. PR template file is missing {end:each}');
+            }
+
+            const eachMatch = prTemplate.match(/{each}([\s\S]*?){end:each}/);
+            
+            if (!eachMatch) {
+                throw new FatalError('failed to create GitHub pull request. Could not find content between {each} and {end:each}');
+            }
+
+            let eachTemplate = eachMatch[1];
+
+            if (eachTemplate.startsWith('\n')) {
+                eachTemplate = eachTemplate.substring(1);
+            }
+
+            if (eachTemplate.endsWith('\n')) {
+                eachTemplate = eachTemplate.substring(0, eachTemplate.length - 1);
+            }
+
+            const eachContent: string[] = [];
+
+            for (const hash of data.hashes) {
+                for (const match of hash.matches) {
+                    let text: string = eachTemplate;
+                    text = text.split('{key}').join(match);
+                    text = text.split('{hash}').join(hash.hash);
+                    text = text.split('{message}').join(hash.message);
+                    eachContent.push(text);
+                }
+            }
+
+            prBody = prBody.replace(eachMatch[0], eachContent.join(''));
+        }
+
+        return prBody;
     }
 
     private getRepoInfo = () => {
@@ -232,9 +290,9 @@ class ReleaseCommand extends Command {
         const [, owner, repo] = match;
         Logger.success('repo info retrieved');
         return {
-            url: repo.trim(),
-            owner,
-            repo
+            url: remoteUrl.split('\n').join(''),
+            owner: owner.trim(),
+            repo: repo.trim(),
         };
     }
 
@@ -262,6 +320,17 @@ class ReleaseCommand extends Command {
         Logger.log(`pulling changes from remote...`);
         execSync(`git pull origin ${branch}`, { encoding: 'utf-8' });
         Logger.success('successfully pulled changes from remote');
+    }
+
+    private writeRelease = (data: object): void => {
+        try {
+            const filename = `release-${dayjs().format('MM-DD-YYYY-HH:mm:ss')}.json`;
+            const filePath = path.join(os.homedir(), '.kraken', 'temp', filename);
+            fs.writeFileSync(filePath, JSON.stringify(data, null, 2));
+            Logger.success(`release data written to ${filePath}`);
+        } catch (err) {
+            Logger.error(`failed to write release file: ${(err as Error).message}`, data);
+        }
     }
 }
 
