@@ -36,6 +36,7 @@ export interface IProject {
 
 export interface IQuery {
   key: string;
+  keyOverride: string;
   expectToFindInGitLog: boolean;
 }
 
