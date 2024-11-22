@@ -255,12 +255,12 @@ export class Parser {
 
           if (typeof this.arguments[arg].validate === 'function') {
             if (this.arguments[arg].validate!(castedValue)) {
-              parsed[arg.split('-').join('')] = castedValue as any;
+              parsed[arg] = castedValue as any;
             } else {
               throw new FatalError(`${arg} failed validation`);
             }
           } else {
-            parsed[arg.split('-').join('')] = castedValue as any;
+            parsed[arg] = castedValue as any;
           }
 
           args.splice(index, 2);
