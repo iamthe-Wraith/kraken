@@ -10,20 +10,46 @@ import { FatalError } from '../lib/error';
 import dayjs from 'dayjs';
 
 class PrepareCommand extends Command {
+    private platforms = new Set(['github']);
+
     constructor() {
         super({
-            pattern: '<prepare>',
+            pattern: '<prepare> <?platform> <?target-branch>',
             docs: `
               Looks through your git log and prepares a list of commit hashes for commits that contained at least 1 of the provided queries.`.trimStart()
         });
 
+        this.flag('attempt-cherry-pick|a', {
+            description: [
+                'creates a new branch from the target branch, then attempt to cherry pick the prepared commits into that branch. if any commits fail to be cherry picked, the branch will be deleted.',
+                '',
+                '❗ if this flag is set, you must also specify the target branch and platform',
+                '',
+                '❗ if this flag is set, the `write` flag will be enabled as well',
+                '',
+                '🚨 this command will not work if you have unstaged changes in your working directory',
+            ].join('\n'),
+        });
+
         this.flag('write|w', {
             description: [
-                'Write the hashes to a file. If this flag is not set, the hashes will only be printed to the console.',
+                'Write the hashes to a file. If this flag is not set, the prepared data will only be printed to the console.',
                 '',
                 '💾 Files are saved in the ~/.kraken/temp directory',
                 '👀 see the `filename` argument for more information',
             ].join('\n'),
+        });
+
+        this.parameter('platform', {
+            description: [
+                'the name of the platform to release to.',
+                '',
+                `supported values are: ${Array.from(this.platforms).join(', ')}.`,
+            ].join('\n'),
+        });
+
+        this.parameter('target-branch', {
+            description: 'the name of the target branch this data will be released to.',
         });
 
         this.argument('filename|f', {
@@ -33,6 +59,14 @@ class PrepareCommand extends Command {
                 '💭 (use `kraken files -i` to list the files that are available)',
                 '',
                 'ℹ️ If this argument is not provided, you will be prompted to enter enter the search queries manually.'
+            ].join('\n'),
+        });
+
+        this.argument('new-branch|n', {
+            description: [
+                'the name of the new branch to create.',
+                '',
+                'ℹ️ if this argument is not set, the new branch will be named `release-<timestamp>`.',
             ].join('\n'),
         });
 
@@ -47,6 +81,10 @@ class PrepareCommand extends Command {
     }
 
     before = async (ctx: IContext): Promise<IContext> => {
+        if (!ctx.config) {
+            throw new FatalError('No config found. Please run "npm install" to generate a config file.');
+        }
+
         if (ctx.arguments.arguments.filename) {
             ctx.data.filename = ctx.arguments.arguments.filename.includes('.json')
                 ? ctx.arguments.arguments.filename
@@ -96,6 +134,33 @@ class PrepareCommand extends Command {
             }
         }
 
+        if (ctx.arguments.flags['attempt-cherry-pick']) {
+            if (!ctx.arguments.parameters.platform) {
+                throw new FatalError('No platform found. You you must specify the platform you want to create the pull|merge request for.');
+            }
+    
+            if (!this.platforms.has(ctx.arguments.parameters.platform)) {
+                throw new FatalError(`Unsupported platform: ${ctx.arguments.parameters.platform}. Supported platforms are: ${Array.from(this.platforms).join(', ')}.`);
+            }
+    
+            if (ctx.arguments.parameters.platform === 'github') {
+                if (!ctx.config.githubToken) {
+                    throw new FatalError('No GitHub API token found. Please update ~/.kraken/config.json with your GitHub API token.');
+                }
+            }
+
+            if (!ctx.arguments.parameters['target-branch']) {
+                throw new FatalError('No target branch found. Please specify the target branch you want to cherry pick the commits to.');
+            }
+
+            // verify target branch exists on remote
+            const output = execSync(`git ls-remote --heads origin ${ctx.arguments.parameters['target-branch']}`, { encoding: 'utf-8' });
+            
+            if (!output) {
+                throw new FatalError(`Target branch '${ctx.arguments.parameters['target-branch']}' does not exist on remote`);
+            }
+        }
+
         return ctx;
     }
 
@@ -123,7 +188,7 @@ class PrepareCommand extends Command {
             } else {
                 this.printHashesReport(ctx.data.report);
 
-                if (ctx.arguments.flags.write) {
+                if (ctx.arguments.flags.write || ctx.arguments.flags['attempt-cherry-pick']) {
                     try {
                         const timestamp = dayjs().format('MMM-DD-YYYY-HH:mm:ss');
                         const filename = ctx.arguments.arguments.output || `prepared-${timestamp}.json`;
@@ -148,6 +213,10 @@ class PrepareCommand extends Command {
                         Logger.error(`Failed to write hashes to file: ${(err as Error).message}`);
                     }
                 }
+
+                if (ctx.arguments.flags['attempt-cherry-pick']) {
+                    this.attemptCherryPick(ctx);
+                }
             }
 
             return ctx;
@@ -159,6 +228,47 @@ class PrepareCommand extends Command {
             }
         }
     };
+
+    private attemptCherryPick = (ctx: IContext) => {
+        Logger.log('\nAttempting to cherry pick commits...');
+
+        const currentBranch = execSync('git branch --show-current', { encoding: 'utf-8' }).trim();
+        const newBranch = ctx.arguments.arguments['new-branch'] || `release-${dayjs().format('MMM-DD-YYYY-HH:mm:ss')}`;
+        const targetBranch = ctx.arguments.parameters['target-branch'];
+        
+        let newBranchCreated = false;
+
+        try {
+            execSync(`git checkout ${targetBranch}`, { encoding: 'utf-8' });
+            execSync(`git pull origin ${targetBranch}`, { encoding: 'utf-8' });
+            execSync(`git checkout -b ${newBranch}`, { encoding: 'utf-8' });
+            execSync(`git push -u origin ${newBranch}`, { encoding: 'utf-8' });
+
+            newBranchCreated = true;
+        } catch (err) {
+            execSync(`git checkout ${currentBranch}`, { encoding: 'utf-8' });
+
+            throw new FatalError(`Failed to create new branch '${newBranch}': ${(err as Error).message}`);
+        }
+
+        if (newBranchCreated) {
+            try {
+                for (const hash of ctx.data.report.hashes) {
+                    execSync(`git cherry-pick ${hash.hash}`, { encoding: 'utf-8' });
+                }
+
+                execSync(`git push origin ${newBranch}`, { encoding: 'utf-8' });
+
+                Logger.success(`Successfully cherry picked commits into new branch '${newBranch}'.\n\nThe Kraken is ready to be released! 🐙`);
+            } catch (err) {
+                execSync('git cherry-pick --abort', { encoding: 'utf-8' });
+                execSync(`git checkout ${currentBranch}`, { encoding: 'utf-8' });
+                execSync(`git branch -D ${newBranch}`, { encoding: 'utf-8' });
+
+                Logger.error('Failed to cherry pick commits. You will need to handle this manually. 😢');
+            }
+        }
+    }
 
     private getGitLogSearchReport = (issues: IQuery[]) => {
         const report: IReport = {

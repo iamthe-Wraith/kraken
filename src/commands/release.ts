@@ -33,14 +33,6 @@ class ReleaseCommand extends Command {
             description: 'the name of the target branch to release to.',
         });
 
-        this.argument('new-branch|n', {
-            description: [
-                'the name of the new branch to create.',
-                '',
-                'ℹ️ if this argument is not set, the new branch will be named `release-<timestamp>`.',
-            ].join('\n'),
-        })
-
         this.argument('prepared|p', {
             description: [
                 'the name of the file that contains the prepared data.',
@@ -53,10 +45,6 @@ class ReleaseCommand extends Command {
         this.argument('title|t', {
             description: 'the title of the pull request.',
         });
-
-        this.flag('attempt-cherry-pick|a', {
-            description: 'attempt to cherry pick the commits into the target branch.',
-        })
     }
 
     before = async (ctx: IContext): Promise<IContext> => {
@@ -113,8 +101,6 @@ class ReleaseCommand extends Command {
             ctx.data.prepared = mostRecentFile;
         }
 
-
-
         return ctx;
     }
 
@@ -151,12 +137,6 @@ class ReleaseCommand extends Command {
             this.pullChangesFromRemote(currentBranch);
             const repo = this.getRepoInfo();
             const prBody = this.getPullRequestBody(data);
-
-            if (ctx.arguments.flags['attempt-cherry-pick']) {
-                currentBranch = this.createNewBranch(ctx);
-
-                Logger.log('attempting cherry picks...');
-            }
 
             const prTitle = `${ctx.arguments.parameters['target-branch']} release ${dayjs().format('MMM-DD-YYYY')}`
 
@@ -198,17 +178,6 @@ class ReleaseCommand extends Command {
                 throw new FatalError(`Failed to create GitHub pull request: ${(err as Error).message}`);
             }
         }
-    }
-
-    private createNewBranch = (ctx: IContext): string => {
-        Logger.log('creating release branch...');
-        const timestamp = dayjs().format('MM-DD-YYYY-HH:mm:ss');
-        const newBranch = ctx.arguments.arguments['new-branch'] || `release-${timestamp}`;
-
-        execSync(`git checkout -b ${newBranch}`, { encoding: 'utf-8' });
-        execSync(`git push -u origin ${newBranch}`, { encoding: 'utf-8' });
-        Logger.success(`release branch created: ${newBranch}`);
-        return newBranch;
     }
 
     private getCurrentBranch = (): string => {
