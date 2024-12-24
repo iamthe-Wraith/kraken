@@ -31,6 +31,12 @@ class PrepareCommand extends Command {
             ].join('\n'),
         });
 
+        this.flag('ignore-case|i', {
+            description: [
+                'ignore case when searching for commits',
+            ].join('\n'),
+        });
+
         this.flag('write|w', {
             description: [
                 'Write the hashes to a file. If this flag is not set, the prepared data will only be printed to the console.',
@@ -171,9 +177,9 @@ class PrepareCommand extends Command {
             if ((ctx.data.issues || []).length) {
                 data = ctx.data.issues;
             } else {
-                data = await this.promptForQuery();
+                data = await this.promptForQuery(ctx);
 
-                // TODO: add support to past multiple queries
+                // TODO: add support to paste multiple queries
             }
 
             if (!data.length) {
@@ -181,7 +187,7 @@ class PrepareCommand extends Command {
                 return ctx;
             }
 
-            ctx.data.report = this.getGitLogSearchReport(data);
+            ctx.data.report = this.getGitLogSearchReport(data, ctx);
 
             if (ctx.data.report.notFound.length) {
                 this.printFoundReport(ctx.data.report);
@@ -270,7 +276,7 @@ class PrepareCommand extends Command {
         }
     }
 
-    private getGitLogSearchReport = (issues: IQuery[]) => {
+    private getGitLogSearchReport = (issues: IQuery[], ctx: IContext) => {
         const report: IReport = {
             found: [],
             notFound: [],
@@ -286,7 +292,7 @@ class PrepareCommand extends Command {
             const key = issue.keyOverride || issue.key;
 
             try {
-                const commits = this.searchGitLog(key);
+                const commits = this.searchGitLog(key, ctx);
 
                 if (commits.length) {
                     report.found.push(key);
@@ -308,7 +314,7 @@ class PrepareCommand extends Command {
         
         const query = keys.join('|');
 
-        const commits = this.searchGitLog(query);
+        const commits = this.searchGitLog(query, ctx);
 
         for (const commit of commits) {
             const [hash, ...msg] = commit.split(' ');
@@ -370,8 +376,10 @@ class PrepareCommand extends Command {
         Logger.log('\n----------------oldest----------------');
     }
 
-    private promptForQuery = (inputs: IQuery[] = []) => new Promise<IQuery[]>((resolve, reject) => {
+    private promptForQuery = (ctx: IContext) => new Promise<IQuery[]>((resolve, reject) => {
         try {
+            const inputs: IQuery[] = [];
+
             const rd = readline.createInterface({
                 input: process.stdin,
                 output: process.stdout
@@ -381,7 +389,7 @@ class PrepareCommand extends Command {
                 let tryAgain = false;
                 const query = q.trim();
                 if (query) {
-                    const commits = this.searchGitLog(query);
+                    const commits = this.searchGitLog(query, ctx);
 
                     if (commits.length) {
                         inputs.push({
@@ -406,7 +414,7 @@ class PrepareCommand extends Command {
                     if (normalized === 'n') {
                         resolve(inputs);
                     } else {
-                        this.promptForQuery().then(resolve);
+                        this.promptForQuery(ctx).then(resolve);
                     }
                 });
             });
@@ -415,9 +423,10 @@ class PrepareCommand extends Command {
         }
     });
 
-    private searchGitLog = (query: string) => {
+    private searchGitLog = (query: string, ctx: IContext) => {
         try {
-            const command = `git log --oneline | grep -E "${query}"`;
+            const ignoreCase = ctx.arguments.flags['ignore-case'];
+            const command = `git log --oneline | grep -${ignoreCase ? 'i' : ''}E "${query}"`;
             const results = execSync(command, { encoding: 'utf-8' });
             return results.split('\n').filter(Boolean);
         } catch (err) {
