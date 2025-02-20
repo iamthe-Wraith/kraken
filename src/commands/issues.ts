@@ -1,10 +1,10 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { IContext, IIssue } from '../types';
-import { Command } from './command';
-import { Logger } from '../lib/logger';
-import { FatalError } from '../lib/error';
+import { IContext, IIssue } from '../types.js';
+import { Command } from './command.js';
+import { Logger } from '../lib/logger.js';
+import { FatalError } from '../lib/error.js';
 import dayjs from 'dayjs';
 
 class IssuesCommand extends Command {
@@ -105,14 +105,38 @@ class IssuesCommand extends Command {
 
             if (ctx.data.issues.length) {
                 Logger.log('\nISSUES');
-                Logger.log(`${'key'.padEnd(10, ' ')} | ${'summary'}`);
-                Logger.log('--------------------------------');
+                Logger.log(`${'key'.padEnd(10, ' ')} | Blocks | Blocked By | ${'summary'}`);
+                Logger.log('-'.padEnd(10, '-') + ' | ' + '-'.padEnd(6, '-') + ' | ' + '-'.padEnd(10, '-') + ' | ' + '-'.padEnd(10, '-'));
     
                 for (const issue of ctx.data.issues) {
-                    Logger.log(`${issue.key.padEnd(10, ' ')} | ${issue.summary}`);
+                    // if (issue.key === 'DEV-3260') {
+                    //     console.log(issue.issueLinks);
+                    // }
+
+                    const blocks = issue.issueLinks.filter((link: any) => {
+                        if (link.type.inward === 'blocks' && link.inwardIssue) {
+                            return link.inwardIssue;
+                        }
+
+                        if (link.type.outward === 'blocks' && link.outwardIssue) {
+                            return link.outwardIssue;
+                        }
+                    });
+
+                    const blockedBy = issue.issueLinks.filter((link: any) => {
+                        if (link.type.inward === 'is blocked by' && link.inwardIssue) {
+                            return link.inwardIssue;
+                        }
+
+                        if (link.type.outward === 'is blocked by' && link.outwardIssue) {
+                            return link.outwardIssue;
+                        }
+                    });
+
+                    Logger.log(`${issue.key.padEnd(10, ' ')} | ${blocks.length.toString().padEnd(6, ' ')} | ${blockedBy.length.toString().padEnd(10, ' ')} | ${issue.summary}`);
                 }
     
-                Logger.log('--------------------------------');
+                Logger.log('-'.padEnd(10, '-') + ' | ' + '-'.padEnd(6, '-') + ' | ' + '-'.padEnd(10, '-') + ' | ' + '-'.padEnd(10, '-'));
             } else {
                 Logger.warning('No issues found');
             }
@@ -219,7 +243,8 @@ class IssuesCommand extends Command {
                 throw new FatalError(`Failed to get issues from Jira: ${res.statusText}`);
             }
 
-            const data = await res.json();   
+            // TODO: come back and update type form any to actual type as defined by the Jira API
+            const data = await res.json() as { issues: any[] };
 
             return data.issues.map((issue: any) => ({
                 id: issue.id,
@@ -228,6 +253,7 @@ class IssuesCommand extends Command {
                 keyOverride: '',
                 summary: issue.fields.summary,
                 expectToFindInGitLog: true,
+                issueLinks: issue.fields.issuelinks,
             }));
         } catch (err) {
             if (err instanceof FatalError) {

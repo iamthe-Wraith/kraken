@@ -1,7 +1,7 @@
-import { FatalError } from '../lib/error';
-import { Logger } from '../lib/logger';
-import { Parser } from '../lib/parser';
-import { IContext } from '../types';
+import { FatalError } from '../lib/error.js';
+import { Logger } from '../lib/logger.js';
+import { Parser } from '../lib/parser.js';
+import { IContext } from '../types.js';
 
 export interface ICommandProps {
   pattern: string;

@@ -3,11 +3,11 @@ import os from 'os';
 import path from 'path';
 import readline from 'readline';
 import { execSync } from 'child_process';
-import { IContext, IIssue, IQuery, IReport } from '../types';
-import { Command } from './command';
-import { Logger } from '../lib/logger';
-import { FatalError } from '../lib/error';
 import dayjs from 'dayjs';
+import { IContext, IIssue, IQuery, IReport } from '../types.js';
+import { Command } from './command.js';
+import { Logger } from '../lib/logger.js';
+import { FatalError } from '../lib/error.js';
 
 class PrepareCommand extends Command {
     private platforms = new Set(['github']);

@@ -1,6 +1,6 @@
 import os from 'os';
-import { FatalError } from './error';
-import { IContext } from '../types';
+import { FatalError } from './error.js';
+import { IContext } from '../types.js';
 
 interface IPattern {
   name: string;
