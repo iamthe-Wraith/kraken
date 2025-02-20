@@ -376,9 +376,9 @@ class PrepareCommand extends Command {
         Logger.log('\n----------------oldest----------------');
     }
 
-    private promptForQuery = (ctx: IContext) => new Promise<IQuery[]>((resolve, reject) => {
+    private promptForQuery = (ctx: IContext, existingInputs: IQuery[] = []) => new Promise<IQuery[]>((resolve, reject) => {
         try {
-            const inputs: IQuery[] = [];
+            const inputs = [...existingInputs];
 
             const rd = readline.createInterface({
                 input: process.stdin,
@@ -414,7 +414,7 @@ class PrepareCommand extends Command {
                     if (normalized === 'n') {
                         resolve(inputs);
                     } else {
-                        this.promptForQuery(ctx).then(resolve);
+                        this.promptForQuery(ctx, inputs).then(resolve);
                     }
                 });
             });
