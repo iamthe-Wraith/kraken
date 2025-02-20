@@ -1,10 +1,10 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { IContext } from '../types';
-import { Command } from './command';
-import { Logger } from '../lib/logger';
-import { FatalError } from '../lib/error';
+import { IContext } from '../types.js';
+import { Command } from './command.js';
+import { Logger } from '../lib/logger.js';
+import { FatalError } from '../lib/error.js';
 import dayjs from 'dayjs';
 
 class FilesCommand extends Command {

@@ -2,9 +2,9 @@
   "compilerOptions": {
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "lib": ["ES2020", "DOM", "DOM.Iterable"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    "lib": ["ES2020"],
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
@@ -13,7 +13,10 @@
     "skipLibCheck": true,
     "strict": true,
     "target": "ES2020",
-    "useDefineForClassFields": true
+    "useDefineForClassFields": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true
   },
-  "include": ["."]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist"]
 }

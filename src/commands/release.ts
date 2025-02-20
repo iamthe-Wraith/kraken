@@ -2,10 +2,10 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { execSync } from 'child_process';
-import { IContext, IPreparedData } from '../types';
-import { Command } from './command';
-import { Logger } from '../lib/logger';
-import { FatalError } from '../lib/error';
+import { IContext, IPreparedData } from '../types.js';
+import { Command } from './command.js';
+import { Logger } from '../lib/logger.js';
+import { FatalError } from '../lib/error.js';
 import dayjs from 'dayjs';
 
 class ReleaseCommand extends Command {
@@ -169,7 +169,7 @@ class ReleaseCommand extends Command {
                 throw new FatalError(`Failed to create pull request: ${error}`);
             }
     
-            const pr = await res.json();
+            const pr = await res.json() as { html_url: string };
             Logger.success(`Successfully created pull request: ${pr.html_url}`);
         } catch (err) {
             if (err instanceof FatalError) {

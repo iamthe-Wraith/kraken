@@ -1,7 +1,7 @@
-import { IContext, IProject } from '../types';
-import { Command } from './command';
-import { Logger } from '../lib/logger';
-import { FatalError } from '../lib/error';
+import { IContext, IProject } from '../types.js';
+import { Command } from './command.js';
+import { Logger } from '../lib/logger.js';
+import { FatalError } from '../lib/error.js';
 
 class ProjectsCommand extends Command {
     private platforms = new Set(['jira']);
@@ -104,7 +104,8 @@ class ProjectsCommand extends Command {
                 throw new FatalError(`Failed to get projects from Jira: ${res.statusText}`);
             }
         
-            const data = await res.json();
+            // TODO: come back and update type form any to actual type as defined by the Jira API
+            const data = await res.json() as { values: any[] };
     
             return data.values.map((project: any) => {
                 return {

@@ -1,10 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import { IContext } from '../types';
-import { Command } from './command';
-import { commands } from '.';
-import { FatalError } from '../lib/error';
-import { Logger } from '../lib/logger';
+import { IContext } from '../types.js';
+import { Command } from './command.js';
+import { commands } from './index.js';
+import { FatalError } from '../lib/error.js';
+import { Logger } from '../lib/logger.js';
 
 class HelpCommand extends Command {
   constructor() {
@@ -37,7 +37,7 @@ class HelpCommand extends Command {
     let version = '';
   
     try {
-      const packageJson = JSON.parse(fs.readFileSync(path.join(require.main!.filename, '..', '..', 'package.json'), 'utf8'));
+      const packageJson = JSON.parse(fs.readFileSync(path.join(process.cwd(), '..', '..', 'package.json'), 'utf8'));
       version = `v${packageJson.version}`;
     } catch (err: any) {
       Logger.error(`\nhelp:printGenDocs error\n\nunable to retrieve kraken version\n${err.message}\n`);

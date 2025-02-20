@@ -1,7 +1,7 @@
-import { IContext, IStatus } from '../types';
-import { Command } from './command';
-import { Logger } from '../lib/logger';
-import { FatalError } from '../lib/error';
+import { IContext, IStatus } from '../types.js';
+import { Command } from './command.js';
+import { Logger } from '../lib/logger.js';
+import { FatalError } from '../lib/error.js';
 
 class StatusesCommand extends Command {
     private platforms = new Set(['jira']);
@@ -115,7 +115,8 @@ class StatusesCommand extends Command {
                 throw new FatalError(`Failed to get statuses from Jira: ${res.statusText}`);
             }
 
-            const data = await res.json();
+            // TODO: come back and update type form any to actual type as defined by the Jira API
+            const data = await res.json() as any[];
 
             const story = data.find((item: any) => item.name === 'Story');
 

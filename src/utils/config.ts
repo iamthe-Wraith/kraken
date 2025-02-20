@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import os from 'os';
-import { IConfig } from '../types';
+import { IConfig } from '../types.js';
 
 const ConfigPath = path.resolve(os.homedir(), '.kraken', 'config.json');
 

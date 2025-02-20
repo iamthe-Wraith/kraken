@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
-const fs = require('node:fs');
-const { resolve } = require('node:path');
-const { homedir } = require('node:os');
-const { execSync } = require('node:child_process');
+import fs from 'node:fs';
+import { resolve } from 'node:path';
+import { homedir } from 'node:os';
+import { execSync } from 'node:child_process';
 
 const dirPath = resolve(homedir(), '.kraken');
 const configTemplatePath = resolve('config-template.json');
@@ -18,7 +18,7 @@ const getConfigTemplate = async () => new Promise((resolve, reject) => {
 
       const buffer = new Buffer.alloc(stats.size);
 
-      fs.read(fd, buffer, 0, buffer.length, null, function (readError, bytesRead, buffer) {
+      fs.read(fd, buffer, 0, buffer.length, null, function (readError, bytesRead, buffer, position, bytesRequested) {
         if (readError) return reject(readError);
         let data;
 
@@ -46,7 +46,7 @@ const getPRTemplate = async () => new Promise((resolve, reject) => {
 
       const buffer = new Buffer.alloc(stats.size);
 
-      fs.read(fd, buffer, 0, buffer.length, null, function (readError, bytesRead, buffer) {
+      fs.read(fd, buffer, 0, buffer.length, null, function (readError, bytesRead, buffer, position, bytesRequested) {
         if (readError) return reject(readError);
         let data;
 
@@ -71,6 +71,7 @@ const createConfig = async () => new Promise((resolve, reject) => {
         // TODO: add support for updating the config file with any new/missing fields
 
         console.warn('[!] config file already exists. skipping creating it');
+        return;
       }
   
       throw err;
