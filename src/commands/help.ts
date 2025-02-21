@@ -2,7 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import { IContext } from '../types.js';
 import { Command } from './command.js';
-import { commands } from './index.js';
+import { commands, commandRegistry } from './index.js';
 import { FatalError } from '../lib/error.js';
 import { Logger } from '../lib/logger.js';
 
@@ -25,7 +25,13 @@ class HelpCommand extends Command {
     if (command === null) {
       this.printGenDocs(ctx);
     } else if (commands.has(command)) {
-      (await import(`./${command}`) as any).help();
+      const commandModule = commandRegistry[command];
+
+      if (commandModule) {
+        commandModule.help();
+      } else {
+        throw new FatalError(`\nhelp:main error\n\ninvalid command passed to help: ${command}. \nenter 'kraken help' for a list of available commands\n`);
+      }
     } else {
       throw new FatalError(`\nhelp:main error\n\ninvalid command passed to help: ${command}. \nenter 'kraken help' for a list of available commands\n`);
     }
